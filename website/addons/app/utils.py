@@ -66,7 +66,7 @@ def args_to_query(query, start=0, size=250):
     }
 
 
-def elastic_to_atom(name, data, query, url):
+def elastic_to_atom(name, data, query, size, start, url):
     if query == '*':
         title_query = 'All'
     else:
@@ -75,9 +75,21 @@ def elastic_to_atom(name, data, query, url):
     if name == 'scrapi':
         name = 'SHARE Notification Service'
 
-    feed = AtomFeed(title='{name}: RSS for query: "{title_query}"'.format(name=name, title_query=title_query),
-                    feed_url='{url}'.format(url=url),
-                    author="COS")
+    prev_page = (start/size)
+
+    if prev_page == 0:
+        prev_page = (start/size) + 1
+
+    feed = AtomFeed(
+        title='{name}: RSS for query: "{title_query}"'.format(name=name, title_query=title_query),
+        feed_url='{url}'.format(url=url),
+        author="COS",
+        links=[
+            {'href': url, 'rel': 'first'},
+            {'href': '{url}page={page}'.format(url=url, page=(start/size)+2), 'rel': 'next'},
+            {'href': '{url}page={page}'.format(url=url, page=prev_page), 'rel': 'previous'}
+        ]
+    )
 
     for doc in data:
         try:
