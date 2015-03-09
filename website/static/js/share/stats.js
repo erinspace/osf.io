@@ -24,7 +24,8 @@ function donutGraph (data) {
         },
         data: data.charts.shareDonutGraph,
         donut: {
-            title: get_source_length(data) + ' Providers'
+            // title: get_source_length(data) + ' Providers'
+            title: '26 Providers'
         },
         legend: {
             show: false
