@@ -673,6 +673,7 @@ def make_url_map(app):
         Rule('/share/search/', ['get', 'post'], search_views.search_share, json_renderer),
         Rule('/share/stats/', 'get', search_views.search_share_stats, json_renderer),
         Rule('/share/providers/', 'get', search_views.search_share_providers, json_renderer),
+        Rule('/share/help/', 'get', {}, OsfWebRenderer('share_api_docs.mako'))
 
     ], prefix='/api/v1')
 
