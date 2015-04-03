@@ -1,0 +1,400 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "SHARE Data",
+        "description": "SHARE Research Release Events",
+        "termsOfService": "http://helloreverb.com/terms/",
+        "contact": {
+            "name": "Center for Open Science",
+            "email": "share-support@osf.io",
+            "url": "http://osf.io/share"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "http://opensource.org/licenses/MIT"
+        }
+    },
+    "host": "staging.osf.io",
+    "basePath": "/api/v1",
+    "schemes": [
+        "https"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/share/search": {
+            "get": {
+                "description": "Normalized SHARE Data from all content providers",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Any valid Lucene query string matching the SHARE schema",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "The starting index of the search. Indexing begins at 0.\nIf you set the size to 100, to page through the results,\nyou would increase your from by increments of 100. Defaults to 0.\n",
+                        "required": false,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "Determines the number of results returned at a time. Defaults to 10.",
+                        "required": false,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Determines what value the results are sorted on.\nIf not provided, it defaults to sorting based on the relevance\nscore computed by Elasticsearch.\n",
+                        "required": false,
+                        "type": "string",
+                        "enum": [
+                            "Date",
+                            "Relevance"
+                        ]
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "search response",
+                        "schema": {
+                            "$ref": "#/definitions/searchResults"
+                        }
+                    },
+                    "default": {
+                        "description": "unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/errorModel"
+                        }
+                    }
+                }
+            }
+        },
+        "/share/stats": {
+            "get": {
+                "description": "Elasticsearch aggregations of SHARE data. Includes the results of the\npre-defined aggregations used to generate the dynaimic graphs on the\nSHARE Search page located on the OSF.\n",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "stats response",
+                        "schema": {
+                            "$ref": "#/definitions/stats"
+                        }
+                    },
+                    "default": {
+                        "description": "unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/errorModel"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "searchResults": {
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "The total number of results found for the current query."
+                },
+                "results": {
+                    "$ref": "#/definitions/result"
+                },
+                "time": {
+                    "type": "number",
+                    "description": "The amount of time the search took to complete, in seconds."
+                }
+            }
+        },
+        "result": {
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "description": "The title of the resource."
+                },
+                "contributors": {
+                    "$ref": "#/definitions/contributor"
+                },
+                "id": {
+                    "$ref": "#/definitions/idComponents",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "An abstract or general description of the resource."
+                },
+                "tags": {
+                    "type": "array",
+                    "description": "A list of tags or keywords identified in the resource itself,\nnormalized to be all lower case.\n",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "source": {
+                    "type": "string",
+                    "description": "A string identifying where the resource came from."
+                },
+                "dateUpdated": {
+                    "type": "string"
+                }
+            }
+        },
+        "contributor": {
+            "properties": {
+                "given": {
+                    "type": "string",
+                    "description": "The first name of the contributor."
+                },
+                "suffix": {
+                    "type": "string",
+                    "description": "The suffix of the contributor."
+                },
+                "family": {
+                    "type": "string",
+                    "description": "The last or family name of the contributor."
+                },
+                "middle": {
+                    "type": "string",
+                    "description": "The middle name or names of the contributor."
+                },
+                "prefix": {
+                    "type": "string",
+                    "description": "The prefix of the contributor."
+                },
+                "ORCID": {
+                    "type": "string",
+                    "description": "The official ORCID of the individual contributor."
+                },
+                "email": {
+                    "type": "string",
+                    "description": "The email address of the contributor."
+                }
+            }
+        },
+        "idComponents": {
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "A URL linking back to the original resource."
+                },
+                "serviceID": {
+                    "type": "string",
+                    "description": "A unique identifier for the resource, originting from the\noriginal source.\n"
+                },
+                "doi": {
+                    "type": "string",
+                    "description": "A DOI for the resource."
+                }
+            }
+        },
+        "stats": {
+            "properties": {
+                "raw_aggregations": {
+                    "$ref": "#/definitions/raw_aggregation"
+                },
+                "charts": {
+                    "$ref": "#/definitions/chart"
+                }
+            }
+        },
+        "raw_aggregation": {
+            "properties": {
+                "sources": {
+                    "$ref": "#/definitions/sourceComponents"
+                },
+                "earlier_documents": {
+                    "$ref": "#/definitions/aggregatedSourceComponents"
+                },
+                "doisMissing": {
+                    "$ref": "#/definitions/aggregatedSourceComponents"
+                },
+                "date_chunks": {
+                    "$ref": "#/definitions/date_chunk"
+                },
+                "dois": {
+                    "$ref": "#/definitions/aggregatedSourceComponents"
+                }
+            }
+        },
+        "chart": {
+            "properties": {
+                "shareTimeGraph": {
+                    "$ref": "#/definitions/shareTimeGraphComponent"
+                },
+                "shareDonutGraph": {
+                    "$ref": "#/definitions/shareDonutGraphComponent"
+                }
+            }
+        },
+        "sourceComponents": {
+            "properties": {
+                "buckets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bucket"
+                    }
+                },
+                "sum_other_doc_count": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "doc_count_error_upper_bound": {
+                    "type": "integer",
+                    "format": "int32"
+                }
+            }
+        },
+        "bucket": {
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "doc_count": {
+                    "type": "integer",
+                    "format": "int32"
+                }
+            }
+        },
+        "aggregatedSourceComponents": {
+            "properties": {
+                "sources": {
+                    "$ref": "#/definitions/sourceComponents"
+                },
+                "doc_count": {
+                    "type": "integer",
+                    "format": "int32"
+                }
+            }
+        },
+        "date_chunk": {
+            "properties": {
+                "buckets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/timeBuckets"
+                    }
+                }
+            }
+        },
+        "timeBuckets": {
+            "properties": {
+                "articles_over_time": {
+                    "$ref": "#/definitions/timeBucket"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "doc_count": {
+                    "type": "integer",
+                    "format": "int32"
+                }
+            }
+        },
+        "timeBucket": {
+            "properties": {
+                "key_as_string": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "doc_count": {
+                    "type": "integer",
+                    "format": "int32"
+                }
+            }
+        },
+        "shareTimeGraphComponent": {
+            "properties": {
+                "x": {
+                    "type": "string"
+                },
+                "colors": {
+                    "$ref": "#/definitions/color"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "groups": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "columns": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "color": {
+            "properties": {
+                "source": {
+                    "type": "string"
+                }
+            }
+        },
+        "shareDonutGraphComponent": {
+            "properties": {
+                "colors": {
+                    "$ref": "#/definitions/color"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "columns": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "errorModel": {
+            "required": [
+                "code",
+                "message"
+            ],
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
