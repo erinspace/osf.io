@@ -52,6 +52,7 @@ def analyze_failed_registration_nodes():
         has_addons = True if len(addon_list) > 0 else False
 
         # Any registrations succeeded after the stuck one?
+        # Not sure why broken_registration.registered_from.registrations was always 0 locally...
         succeeded_registrations_after_failed = []
         for other_reg in Node.find(
             Q('is_registration', 'eq', True) & Q('registered_from', 'eq', broken_registration.registered_from_id)
