@@ -59,6 +59,8 @@ def analyze_failed_registration_nodes():
             if other_reg.registration_approval.is_approved and other_reg.registered_date > broken_registration.registered_date:
                 succeeded_registrations_after_failed.append(other_reg._id)
 
+        can_be_reset = True if len(node_logs_after_date) == 0 and not has_addons and len(succeeded_registrations_after_failed) == 0 else False
+
         failed_registration_info.append(
             {
                 'broken_registration_node': broken_registration._id,
@@ -66,7 +68,8 @@ def analyze_failed_registration_nodes():
                 'logs_on_original_after_registration_date': node_logs_after_date,
                 'has_addons': has_addons,
                 'addon_list': addon_list,
-                'succeeded_registrations_after_failed': succeeded_registrations_after_failed
+                'succeeded_registrations_after_failed': succeeded_registrations_after_failed,
+                'can_be_reset': can_be_reset
             }
         )
 
