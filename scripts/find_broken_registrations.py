@@ -44,7 +44,7 @@ def analyze_failed_registration_nodes():
     failed_registration_info = []
     for broken_registration in failed_registration_nodes:
         node_logs_after_date = [
-            log for log in broken_registration.registered_from.logs if log.date > broken_registration.registered_date
+            log.action for log in broken_registration.registered_from.logs if log.date > broken_registration.registered_date
         ]
 
         # Does it have any addons?
