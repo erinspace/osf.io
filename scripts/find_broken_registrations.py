@@ -89,7 +89,7 @@ def save_failed_registration_info_to_csv(failed_registration_info):
 def main():
     init_app(routes=False)
 
-    broken_registrations = find_failed_registrations()
+    broken_registrations = analyze_failed_registration_nodes()
     save_failed_registration_info_to_csv(broken_registrations)
 
     logger.info('{n} broken registrations found'.format(n=len(broken_registrations)))
