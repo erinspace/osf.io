@@ -10,7 +10,7 @@ from nose.tools import (assert_equal, assert_false, assert_in, assert_is,
                         assert_is_none, assert_not_in, assert_raises,
                         assert_true)
 from osf_tests.factories import ProjectFactory, UserFactory
-from osf_tests.utils import mock_auth
+from tests.utils import mock_auth
 from website.addons.base import exceptions
 
 pytestmark = pytest.mark.django_db
@@ -627,3 +627,32 @@ class CitationAddonProviderTestSuiteMixin(OAuthCitationsTestSuiteMixinBase):
             with assert_raises(HTTPError) as exc_info:
                 self.provider.client
             assert_equal(exc_info.exception.code, 403)
+
+    def test_provider_user_account(self):
+        test_class = self.ProviderClass()
+        # mock_account = mock.Mock()
+        # test_class.provider = mock_account
+
+        ea = self.ExternalAccountFactory()
+        ea2 = self.ExternalAccountFactory()
+
+        # add external accounts to user
+        self.user.external_accounts.add(ea)
+
+        expected = {
+            'accounts': [
+                {
+                    'id': ea._id,
+                    'provider_id': ea.provider_id,
+                    'provider_name': ea.provider_name,
+                    'provider_short_name': ea.provider,
+                    'display_name': ea.display_name,
+                    'profile_url': ea.profile_url,
+                    'nodes': [],
+                    'host': ea.oauth_key,
+                    'host_url': 'https://{0}'.format(ea.oauth_key)
+                }
+            ]
+        }
+
+        assert test_class.user_accounts(self.user) == expected
