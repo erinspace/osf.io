@@ -175,6 +175,30 @@ class TestPreprintUpdate(ApiTestCase):
         preprint_detail = self.app.get(self.url, auth=self.user.auth).json['data']
         assert_equal(preprint_detail['links']['doi'], 'https://dx.doi.org/{}'.format(new_doi))
 
+    def test_update_blog_url(self):
+        blog_url = 'http://chillidogs.club'
+        assert_equal(self.preprint.blog_url, None)
+
+        update_blog_url_payload = build_preprint_update_payload(self.preprint._id, attributes={'blog_url': blog_url})
+
+        res = self.app.patch_json_api(self.url, update_blog_url_payload, auth=self.user.auth)
+        assert_equal(res.status_code, 200)
+
+        self.preprint.reload()
+        preprint_detail = self.app.get(self.url, auth=self.user.auth).json['data']
+        assert_equal(preprint_detail['links']['blog'], blog_url)
+
+    def test_update_blog_url_invalid_url(self):
+        blog_url = 'totallynotaurl'
+        assert_equal(self.preprint.blog_url, None)
+
+        update_blog_url_payload = build_preprint_update_payload(self.preprint._id, attributes={'blog_url': blog_url})
+
+        res = self.app.patch_json_api(self.url, update_blog_url_payload, auth=self.user.auth, expect_errors=True)
+
+        assert_equal(res.status_code, 400)
+        assert_equal(res.json['errors'][0]['detail'], 'Enter a valid URL.')
+
     def test_write_contrib_cannot_set_primary_file(self):
         user_two = AuthUserFactory()
         self.preprint.node.add_contributor(user_two, permissions=['read', 'write'], auth=Auth(self.user), save=True)
