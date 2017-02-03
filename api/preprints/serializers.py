@@ -71,6 +71,7 @@ class PreprintSerializer(JSONAPISerializer):
     date_modified = DateByVersion(read_only=True)
     date_published = DateByVersion(read_only=True)
     doi = ser.CharField(source='article_doi', required=False, allow_null=True)
+    blog_url = ser.URLField(required=False, allow_null=True)
     is_published = ser.BooleanField(required=False)
     is_preprint_orphan = ser.BooleanField(read_only=True)
     license_record = NodeLicenseSerializer(required=False, source='license')
@@ -109,7 +110,8 @@ class PreprintSerializer(JSONAPISerializer):
         {
             'self': 'get_preprint_url',
             'html': 'get_absolute_html_url',
-            'doi': 'get_doi_url'
+            'doi': 'get_doi_url',
+            'blog': 'get_blog_url'
         }
     )
 
@@ -124,6 +126,9 @@ class PreprintSerializer(JSONAPISerializer):
 
     def get_doi_url(self, obj):
         return 'https://dx.doi.org/{}'.format(obj.article_doi) if obj.article_doi else None
+
+    def get_blog_url(self, obj):
+        return obj.blog_url if obj.blog_url else None
 
     def update(self, preprint, validated_data):
         assert isinstance(preprint, PreprintService), 'You must specify a valid preprint to be updated'
@@ -150,6 +155,10 @@ class PreprintSerializer(JSONAPISerializer):
         if 'article_doi' in validated_data:
             preprint.node.preprint_article_doi = validated_data['article_doi']
             save_node = True
+
+        if 'blog_url' in validated_data:
+            preprint.blog_url = validated_data['blog_url']
+            save_preprint = True
 
         published = validated_data.pop('is_published', None)
         if published is not None:
