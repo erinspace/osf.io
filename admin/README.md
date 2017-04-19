@@ -10,7 +10,7 @@ so you might not need to repeat them if you already have the base OSF docker con
 2. Set up a superuser
 **note** - your superuser will have all permissions, and will be able to access the admin's admin interface.
 If you are manually testing functionality for permissions views, do not log in to the admin as your superuser, as you will always have all permissions.
-- Open up the OSF shell with `invoke shell`
+- Open up the OSF shell with `docker-compose run --rm web inv shell` or `invoke shell` if you have requirements installed locally.
 - Select the already existing OSF User you'd like to make an admin superuser with `user = OSFUser.objects.get(username=<your_user@cos.io>)`
 - Set that user to be a superuser and staff with `user.is_superuser = True` and `user.is_staff = True`
 - Save your user with `user.save()`
