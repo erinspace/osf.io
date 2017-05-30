@@ -1,4 +1,5 @@
 from modularodm import Q as MODMQ
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import generics, permissions as drf_permissions
 
 from framework.auth.oauth_scopes import CoreScopes
@@ -70,7 +71,8 @@ class IdentifierList(JSONAPIBaseView, generics.ListAPIView, ODMFilterMixin):
 
     # overrides ListCreateAPIView
     def get_queryset(self):
-        return Identifier.find(self.get_query_from_request())
+        content_type = ContentType.objects.get_for_model(Identifier)
+        return Identifier.objects.filter(object_id=self.get_object().id, content_type=content_type)
 
     # overrides ODMFilterMixin
     def get_default_odm_query(self):
