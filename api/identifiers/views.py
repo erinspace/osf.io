@@ -66,17 +66,22 @@ class IdentifierList(JSONAPIBaseView, generics.ListAPIView, ODMFilterMixin):
     view_category = 'identifiers'
     view_name = 'identifier-list'
 
+    def get_content_type(self, obj):
+        return ContentType.objects.get_for_model(type(obj))
+
     def get_object(self, *args, **kwargs):
         raise NotImplementedError
 
     # overrides ListCreateAPIView
     def get_queryset(self):
-        content_type = ContentType.objects.get_for_model(Identifier)
-        return Identifier.objects.filter(object_id=self.get_object().id, content_type=content_type)
+        obj = self.get_object()
+        return Identifier.objects.filter(object_id=obj.id, content_type=self.get_content_type(obj))
 
     # overrides ODMFilterMixin
     def get_default_odm_query(self):
-        return MODMQ('pk', 'in', self.get_object().identifiers.values_list('pk', flat=True))
+        obj = self.get_object()
+        identifiers_list = Identifier.objects.filter(object_id=obj.id, content_type=self.get_content_type(obj)).values_list('pk', flat=True)
+        return MODMQ('pk', 'in', identifiers_list)
 
 
 class IdentifierDetail(JSONAPIBaseView, generics.RetrieveAPIView):
