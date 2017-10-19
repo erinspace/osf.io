@@ -9,14 +9,17 @@ from django.contrib.contenttypes.fields import GenericRelation
 
 from framework.postcommit_tasks.handlers import enqueue_postcommit_task
 from framework.exceptions import PermissionsError
-from osf.models import NodeLog, Subject
+from osf.models.nodelog import NodeLog
+from osf.models.subject import Subject
 from osf.models.validators import validate_subject_hierarchy
 from osf.utils.fields import NonNaiveDateTimeField
 from website.preprints.tasks import on_preprint_updated, get_and_set_preprint_identifiers
 from website.project.licenses import set_license
-from website.util import api_v2_url
+from website.util import api_v2_url, api_url_for
 from website.util.permissions import ADMIN
 from website import settings, mails
+from addons.osfstorage.models import OsfStorageFileNode, OsfStorageFile
+from addons.osfstorage.mixins import UploadMixin
 
 from reviews.models.mixins import ReviewableMixin
 from reviews.workflow import States
@@ -24,7 +27,7 @@ from reviews.workflow import States
 from osf.models.base import BaseModel, GuidMixin
 from osf.models.identifiers import IdentifierMixin, Identifier
 
-class PreprintService(DirtyFieldsMixin, GuidMixin, IdentifierMixin, ReviewableMixin, BaseModel):
+class PreprintService(DirtyFieldsMixin, GuidMixin, IdentifierMixin, ReviewableMixin, UploadMixin, BaseModel):
     date_created = NonNaiveDateTimeField(auto_now_add=True)
     date_modified = NonNaiveDateTimeField(auto_now=True)
     provider = models.ForeignKey('osf.PreprintProvider',
@@ -44,6 +47,9 @@ class PreprintService(DirtyFieldsMixin, GuidMixin, IdentifierMixin, ReviewableMi
 
     identifiers = GenericRelation(Identifier, related_query_name='preprintservices')
 
+    file_nodes = GenericRelation(OsfStorageFileNode)
+    primary_file = models.ForeignKey(OsfStorageFile, null=True, blank=True, related_name='preprint')
+
     class Meta:
         unique_together = ('node', 'provider')
         permissions = (
@@ -56,12 +62,6 @@ class PreprintService(DirtyFieldsMixin, GuidMixin, IdentifierMixin, ReviewableMi
     @property
     def verified_publishable(self):
         return self.is_published and self.node.is_preprint and not self.node.is_deleted
-
-    @property
-    def primary_file(self):
-        if not self.node:
-            return
-        return self.node.preprint_file
 
     @property
     def article_doi(self):
@@ -144,11 +144,14 @@ class PreprintService(DirtyFieldsMixin, GuidMixin, IdentifierMixin, ReviewableMi
         if not self.node.has_permission(auth.user, ADMIN):
             raise PermissionsError('Only admins can change a preprint\'s primary file.')
 
-        if preprint_file.node != self.node or preprint_file.provider != 'osfstorage':
-            raise ValueError('This file is not a valid primary file for this preprint.')
+        if preprint_file.target != self.node or preprint_file.provider != 'osfstorage':
+            if preprint_file.target != self:
+                raise ValueError('This file is not a valid primary file for this preprint.')
 
         existing_file = self.node.preprint_file
         self.node.preprint_file = preprint_file
+
+        self.primary_file = preprint_file
 
         # only log if updating the preprint file, not adding for the first time
         if existing_file:
@@ -175,7 +178,7 @@ class PreprintService(DirtyFieldsMixin, GuidMixin, IdentifierMixin, ReviewableMi
         self.is_published = published
 
         if published:
-            if not (self.node.preprint_file and self.node.preprint_file.node == self.node):
+            if not (self.node.preprint_file and (self.node.preprint_file.target == self or self.node.preprint_file.target == self.node)):
                 raise ValueError('Preprint node is not a valid preprint; cannot publish.')
             if not self.provider:
                 raise ValueError('Preprint provider not specified; cannot publish.')
@@ -236,6 +239,9 @@ class PreprintService(DirtyFieldsMixin, GuidMixin, IdentifierMixin, ReviewableMi
 
         if save:
             self.save()
+
+    def api_url_for(self, view_name, _absolute=False, *args, **kwargs):
+        return api_url_for(view_name, pid=self._primary_key, _absolute=_absolute, *args, **kwargs)
 
     def save(self, *args, **kwargs):
         first_save = not bool(self.pk)
