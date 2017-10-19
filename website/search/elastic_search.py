@@ -15,6 +15,7 @@ import six
 
 from django.apps import apps
 from django.core.paginator import Paginator
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from elasticsearch import (ConnectionError, Elasticsearch, NotFoundError,
                            RequestError, TransportError, helpers)
@@ -25,6 +26,7 @@ from osf.models import OSFUser
 from osf.models import BaseFileNode
 from osf.models import Institution
 from osf.models import QuickFilesNode
+
 from website import settings
 from website.filters import gravatar
 from osf.models.licenses import serialize_node_license_record
@@ -385,7 +387,7 @@ def serialize_node(node, category):
 def update_node(node, index=None, bulk=False, async=False):
     from addons.osfstorage.models import OsfStorageFile
     index = index or INDEX
-    for file_ in paginated(OsfStorageFile, Q(node=node)):
+    for file_ in paginated(OsfStorageFile, Q(content_type=ContentType.objects.get_for_model(type(node)), object_id=node.id)):
         update_file(file_, index=index)
 
     if node.is_deleted or not node.is_public or node.archiving or (node.is_spammy and settings.SPAM_FLAGGED_REMOVE_FROM_SEARCH) or node.is_quickfiles:
@@ -507,7 +509,7 @@ def update_file(file_, index=None, delete=False):
     index = index or INDEX
 
     # TODO: Can remove 'not file_.name' if we remove all base file nodes with name=None
-    if not file_.name or not file_.node.is_public or delete or file_.node.is_deleted or file_.node.archiving:
+    if not file_.name or not getattr(file_.target, 'is_public', True) or delete or getattr(file_.target, 'is_deleted', False) or getattr(file_.target, 'archiving', False):
         client().delete(
             index=index,
             doc_type='file',
@@ -519,12 +521,12 @@ def update_file(file_, index=None, delete=False):
 
     # We build URLs manually here so that this function can be
     # run outside of a Flask request context (e.g. in a celery task)
-    file_deep_url = '/{node_id}/files/{provider}{path}/'.format(
-        node_id=file_.node._id,
+    file_deep_url = '/{target_id}/files/{provider}{path}/'.format(
+        target_id=file_.target._id,
         provider=file_.provider,
         path=file_.path,
     )
-    node_url = '/{node_id}/'.format(node_id=file_.node._id)
+    node_url = '/{target_id}/'.format(target_id=file_.target._id)
 
     guid_url = None
     file_guid = file_.get_guid(create=False)
@@ -538,10 +540,10 @@ def update_file(file_, index=None, delete=False):
         'name': file_.name,
         'category': 'file',
         'node_url': node_url,
-        'node_title': file_.node.title,
-        'parent_id': file_.node.parent_node._id if file_.node.parent_node else None,
-        'is_registration': file_.node.is_registration,
-        'is_retracted': file_.node.is_retracted,
+        'node_title': getattr(file_.target, 'title', None),
+        'parent_id': file_.target.parent_node._id if getattr(file_.target, 'parent_node', None) else None,
+        'is_registration': getattr(file_.target, 'is_registration', False),
+        'is_retracted': getattr(file_.target, 'is_retracted', False),
         'extra_search_terms': clean_splitters(file_.name),
     }
 
