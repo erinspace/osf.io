@@ -50,7 +50,7 @@ class TestGuidDetail:
 
         #test_redirect_to_file_view
         test_file = OsfStorageFile.create(
-            node=ProjectFactory(),
+            target=ProjectFactory(),
             path='/test',
             name='test',
             materialized_path='/test',
@@ -91,7 +91,7 @@ class TestGuidDetail:
 
         #test_redirect_when_viewing_private_project_file_through_view_only_link
         test_file = OsfStorageFile.create(
-            node=project,
+            target=project,
             path='/test',
             name='test',
             materialized_path='/test',

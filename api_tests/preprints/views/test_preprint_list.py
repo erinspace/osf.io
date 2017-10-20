@@ -396,6 +396,7 @@ class TestPreprintCreate(ApiTestCase):
                 'subjects': [[SubjectFactory()._id]],
                 'is_published': True
             })
+        # import ipdb; ipdb.set_trace()
         res = self.app.post_json_api(self.url, private_project_payload, auth=self.user.auth)
         assert mock_on_preprint_updated.called
 

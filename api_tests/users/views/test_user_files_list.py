@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+from django.contrib.contenttypes.models import ContentType
 
 from osf_tests.factories import AuthUserFactory
 from api.base.settings.defaults import API_BASE
@@ -66,7 +67,7 @@ class TestUserQuickFiles:
         ids = [each['id'] for each in node_json]
         assert len(ids) == OsfStorageFile.objects.count()
 
-    def test_get_files_me(self, app, user):
+    def test_get_files_me(self, app, user, quickfiles):
         user_two = AuthUserFactory()
         quickfiles_two = QuickFilesNode.objects.get(creator=user_two)
         osf_storage_two = quickfiles_two.get_addon('osfstorage')
@@ -81,15 +82,17 @@ class TestUserQuickFiles:
         node_json = res.json['data']
 
         ids_returned = [each['id'] for each in node_json]
-        ids_from_files = OsfStorageFile.objects.filter(node__creator=user).values_list('_id', flat=True)
-        user_two_file_ids = OsfStorageFile.objects.filter(node__creator=user_two).values_list('_id', flat=True)
+        quickfiles_content_type = ContentType.objects.get_for_model(quickfiles)
+        ids_from_files = OsfStorageFile.objects.filter(object_id=quickfiles.id, content_type=quickfiles_content_type).values_list('_id', flat=True)
+        user_two_file_ids = OsfStorageFile.objects.filter(object_id=quickfiles_two.id, content_type=quickfiles_content_type).values_list('_id', flat=True)
 
         assert sorted(ids_returned) == sorted(ids_from_files)
         for ident in user_two_file_ids:
             assert ident not in ids_returned
 
-    def test_get_files_detail_has_user_relationship(self, app, user):
-        file_id = OsfStorageFile.objects.filter(node__creator=user).values_list('_id', flat=True).first()
+    def test_get_files_detail_has_user_relationship(self, app, user, quickfiles):
+        content_type = ContentType.objects.get_for_model(quickfiles)
+        file_id = OsfStorageFile.objects.filter(object_id=quickfiles.id, content_type=content_type).values_list('_id', flat=True).first()
         url = "/{}files/{}/".format(API_BASE, file_id)
         res = app.get(url, auth=user.auth)
         file_detail_json = res.json['data']
