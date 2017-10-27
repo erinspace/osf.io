@@ -648,7 +648,7 @@ def addon_view_or_download_file(auth, path, provider, **kwargs):
             # Allow osfstorage to redirect if the deep url can be used to find a valid file_node
             if redirect_file_node and redirect_file_node.provider == 'osfstorage' and not redirect_file_node.is_deleted:
                 return redirect(
-                    redirect_file_node.node.web_url_for('addon_view_or_download_file', path=redirect_file_node._id, provider=redirect_file_node.provider)
+                    redirect_file_node.target.web_url_for('addon_view_or_download_file', path=redirect_file_node._id, provider=redirect_file_node.provider)
                 )
             raise HTTPError(httplib.NOT_FOUND, data={
                 'message_short': 'File Not Found',
