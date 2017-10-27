@@ -12,7 +12,7 @@ from framework.exceptions import HTTPError
 from framework.auth.decorators import collect_auth
 from framework.database import get_or_http_error
 
-from osf.models import AbstractNode
+from osf.models import AbstractNode, Guid
 from website import settings
 
 _load_node_or_fail = lambda pk: get_or_http_error(AbstractNode, pk)
@@ -128,11 +128,11 @@ def must_not_be_registration(func):
 
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
+        if kwargs.get('nid') or kwargs.get('pid'):
+            _inject_nodes(kwargs)
+        target = kwargs.get('node') or getattr(Guid.load(kwargs.get('guid')), 'referent', None)
 
-        _inject_nodes(kwargs)
-        node = kwargs['node']
-
-        if node.is_registration and not node.archiving:
+        if getattr(target, 'is_registration', False) and not getattr(target, 'archiving', False):
             raise HTTPError(
                 http.BAD_REQUEST,
                 data={
@@ -329,7 +329,6 @@ def must_be_addon_authorizer(addon_name):
 
     return wrapper
 
-
 def must_have_permission(permission):
     """Decorator factory for checking permissions. Checks that user is logged
     in and has necessary permissions for node. Node must be passed in keyword
@@ -346,8 +345,9 @@ def must_have_permission(permission):
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
             # Ensure `project` and `node` kwargs
-            _inject_nodes(kwargs)
-            node = kwargs['node']
+            if kwargs.get('nid') or kwargs.get('pid'):
+                _inject_nodes(kwargs)
+            target = kwargs.get('node') or getattr(Guid.load(kwargs.get('guid')), 'referent', None)
 
             kwargs['auth'] = Auth.from_kwargs(request.args.to_dict(), kwargs)
             user = kwargs['auth'].user
@@ -357,7 +357,7 @@ def must_have_permission(permission):
                 raise HTTPError(http.UNAUTHORIZED)
 
             # User must have permissions
-            if not node.has_permission(user, permission):
+            if not target.has_permission(user, permission):
                 raise HTTPError(http.FORBIDDEN)
 
             # Call view function
