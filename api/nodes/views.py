@@ -1932,7 +1932,7 @@ class NodeFilesList(JSONAPIBaseView, generics.ListAPIView, WaterButlerMixin, Lis
             # We should not have gotten a file here
             raise NotFound
 
-        return files_list.children.prefetch_related('node__guids', 'versions', 'tags', 'guids')
+        return files_list.children.prefetch_related('versions', 'tags', 'guids')
 
     # overrides ListAPIView
     def get_queryset(self):
