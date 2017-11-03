@@ -210,8 +210,14 @@ def _must_be_contributor_factory(include_public, include_view_only_anon=True):
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
             response = None
-            _inject_nodes(kwargs)
-            node = kwargs['node']
+            target = None
+            if kwargs.get('guid'):
+                guid = kwargs['guid']
+                target = getattr(Guid.load(guid), 'referent', None)
+            else:
+                _inject_nodes(kwargs)
+
+            target = kwargs.get('node') or target
 
             kwargs['auth'] = Auth.from_kwargs(request.args.to_dict(), kwargs)
             user = kwargs['auth'].user
@@ -226,18 +232,18 @@ def _must_be_contributor_factory(include_public, include_view_only_anon=True):
                     link_anon = PrivateLink.objects.filter(key=key).values_list('anonymous', flat=True).get()
                 except PrivateLink.DoesNotExist:
                     link_anon = None
-
-            if not node.is_public or not include_public:
-                if not include_view_only_anon and link_anon:
-                    if not check_can_access(node=node, user=user):
-                        raise HTTPError(http.UNAUTHORIZED)
-                elif key not in node.private_link_keys_active:
-                    if not check_can_access(node=node, user=user, key=key):
-                        redirect_url = check_key_expired(key=key, node=node, url=request.url)
-                        if request.headers.get('Content-Type') == 'application/json':
+            if isinstance(target, AbstractNode):
+                if not target.is_public or not include_public:
+                    if not include_view_only_anon and link_anon:
+                        if not check_can_access(node=target, user=user):
                             raise HTTPError(http.UNAUTHORIZED)
-                        else:
-                            response = redirect(cas.get_login_url(redirect_url))
+                    elif key not in target.private_link_keys_active:
+                        if not check_can_access(node=target, user=user, key=key):
+                            redirect_url = check_key_expired(key=key, node=target, url=request.url)
+                            if request.headers.get('Content-Type') == 'application/json':
+                                raise HTTPError(http.UNAUTHORIZED)
+                            else:
+                                response = redirect(cas.get_login_url(redirect_url))
 
             return response or func(*args, **kwargs)
 
