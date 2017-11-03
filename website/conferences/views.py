@@ -4,6 +4,7 @@ import httplib
 import logging
 
 from django.db import transaction
+from django.contrib.contenttypes.models import ContentType
 from bulk_update.helper import bulk_update
 
 from addons.osfstorage.models import OsfStorageFile
@@ -147,7 +148,8 @@ def add_poster_by_email(conference, message):
 
 
 def _render_conference_node(node, idx, conf):
-    record = OsfStorageFile.objects.filter(node=node).first()
+    content_type = ContentType.objects.get_for_model(node)
+    record = OsfStorageFile.objects.filter(object_id=node.id, content_type=content_type).first()
 
     if not record:
         download_url = ''
