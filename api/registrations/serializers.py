@@ -15,8 +15,8 @@ from api.nodes.serializers import NodeSerializer, NodeProviderSerializer
 from api.nodes.serializers import NodeLinksSerializer, NodeLicenseSerializer
 from api.nodes.serializers import NodeContributorsSerializer, NodeTagField
 from api.base.serializers import (IDField, RelationshipField, LinksField, HideIfWithdrawal,
-                                  FileCommentRelationshipField, HideIfRegistration,
-                                  JSONAPIListField, ShowIfVersion, DateByVersion, TargetFileHyperLinkField)
+                                  FileCommentRelationshipField, NodeFileHyperLinkField, HideIfRegistration,
+                                  JSONAPIListField, ShowIfVersion, DateByVersion)
 from framework.auth.core import Auth
 from osf.exceptions import ValidationValueError
 
@@ -336,9 +336,9 @@ class RegistrationContributorsSerializer(NodeContributorsSerializer):
 
 class RegistrationFileSerializer(OsfStorageFileSerializer):
 
-    files = TargetFileHyperLinkField(
+    files = NodeFileHyperLinkField(
         related_view='registrations:registration-files',
-        related_view_kwargs={'node_id': '<node._id>', 'path': '<path>', 'provider': '<provider>'},
+        related_view_kwargs={'node_id': '<target._id>', 'path': '<path>', 'provider': '<provider>'},
         kind='folder'
     )
 
@@ -349,7 +349,7 @@ class RegistrationFileSerializer(OsfStorageFileSerializer):
                                             )
 
     node = RelationshipField(related_view='registrations:registration-detail',
-                                     related_view_kwargs={'node_id': '<node._id>'},
+                                     related_view_kwargs={'node_id': '<target._id>'},
                                      help_text='The registration that this file belongs to'
                              )
 
@@ -357,9 +357,9 @@ class RegistrationProviderSerializer(NodeProviderSerializer):
     """
     Overrides NodeProviderSerializer to lead to correct registration file links
     """
-    files = TargetFileHyperLinkField(
+    files = NodeFileHyperLinkField(
         related_view='registrations:registration-files',
-        related_view_kwargs={'node_id': '<node._id>', 'path': '<path>', 'provider': '<provider>'},
+        related_view_kwargs={'node_id': '<target._id>', 'path': '<path>', 'provider': '<provider>'},
         kind='folder',
         never_embed=True
     )
