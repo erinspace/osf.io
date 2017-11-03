@@ -15,8 +15,8 @@ from api.nodes.serializers import NodeSerializer, NodeProviderSerializer
 from api.nodes.serializers import NodeLinksSerializer, NodeLicenseSerializer
 from api.nodes.serializers import NodeContributorsSerializer, NodeTagField
 from api.base.serializers import (IDField, RelationshipField, LinksField, HideIfWithdrawal,
-                                  FileCommentRelationshipField, NodeFileHyperLinkField, HideIfRegistration,
-                                  JSONAPIListField, ShowIfVersion, DateByVersion,)
+                                  FileCommentRelationshipField, HideIfRegistration,
+                                  JSONAPIListField, ShowIfVersion, DateByVersion, TargetFileHyperLinkField)
 from framework.auth.core import Auth
 from osf.exceptions import ValidationValueError
 
@@ -336,7 +336,7 @@ class RegistrationContributorsSerializer(NodeContributorsSerializer):
 
 class RegistrationFileSerializer(OsfStorageFileSerializer):
 
-    files = NodeFileHyperLinkField(
+    files = TargetFileHyperLinkField(
         related_view='registrations:registration-files',
         related_view_kwargs={'node_id': '<node._id>', 'path': '<path>', 'provider': '<provider>'},
         kind='folder'
@@ -357,7 +357,7 @@ class RegistrationProviderSerializer(NodeProviderSerializer):
     """
     Overrides NodeProviderSerializer to lead to correct registration file links
     """
-    files = NodeFileHyperLinkField(
+    files = TargetFileHyperLinkField(
         related_view='registrations:registration-files',
         related_view_kwargs={'node_id': '<node._id>', 'path': '<path>', 'provider': '<provider>'},
         kind='folder',

@@ -986,7 +986,8 @@ class WaterbutlerLink(Link):
             raise SkipField
         if self.must_be_file is True and obj.path.endswith('/'):
             raise SkipField
-        url = website_utils.waterbutler_api_url_for(obj.target._id, obj.provider, obj.path, **self.kwargs)
+        target_id = obj.target._id if getattr(obj, 'target', None) else obj.node._id
+        url = website_utils.waterbutler_api_url_for(target_id, obj.provider, obj.path, **self.kwargs)
         if not url:
             raise SkipField
         else:
@@ -1004,6 +1005,8 @@ class NodeFileHyperLinkField(RelationshipField):
             raise SkipField
         return super(NodeFileHyperLinkField, self).get_url(obj, view_name, request, format)
 
+
+class TargetFileHyperLinkField(NodeFileHyperLinkField):
     def lookup_attribute(self, obj, lookup_field):
         if lookup_field == '<node._id>':
             lookup_field = '<target._id>'
