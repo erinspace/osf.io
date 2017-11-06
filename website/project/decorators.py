@@ -12,7 +12,7 @@ from framework.exceptions import HTTPError
 from framework.auth.decorators import collect_auth
 from framework.database import get_or_http_error
 
-from osf.models import AbstractNode, Guid
+from osf.models import AbstractNode, Guid, PreprintService
 from website import settings
 
 _load_node_or_fail = lambda pk: get_or_http_error(AbstractNode, pk)
@@ -211,13 +211,13 @@ def _must_be_contributor_factory(include_public, include_view_only_anon=True):
         def wrapped(*args, **kwargs):
             response = None
             target = None
-            if kwargs.get('guid'):
-                guid = kwargs['guid']
-                target = getattr(Guid.load(guid), 'referent', None)
+            guid = Guid.load(kwargs.get('guid'))
+            if guid:
+                target = getattr(guid, 'referent', None)
             else:
                 _inject_nodes(kwargs)
 
-            target = kwargs.get('node') or target
+            target = target or kwargs.get('node')
 
             kwargs['auth'] = Auth.from_kwargs(request.args.to_dict(), kwargs)
             user = kwargs['auth'].user
@@ -232,18 +232,21 @@ def _must_be_contributor_factory(include_public, include_view_only_anon=True):
                     link_anon = PrivateLink.objects.filter(key=key).values_list('anonymous', flat=True).get()
                 except PrivateLink.DoesNotExist:
                     link_anon = None
-            if isinstance(target, AbstractNode):
-                if not target.is_public or not include_public:
-                    if not include_view_only_anon and link_anon:
-                        if not check_can_access(node=target, user=user):
+
+            if isinstance(target, PreprintService):
+                # If the target is a preprint, check permissions on the node for now
+                target = target.node
+            if not target.is_public or not include_public:
+                if not include_view_only_anon and link_anon:
+                    if not check_can_access(node=target, user=user):
+                        raise HTTPError(http.UNAUTHORIZED)
+                elif key not in target.private_link_keys_active:
+                    if not check_can_access(node=target, user=user, key=key):
+                        redirect_url = check_key_expired(key=key, node=target, url=request.url)
+                        if request.headers.get('Content-Type') == 'application/json':
                             raise HTTPError(http.UNAUTHORIZED)
-                    elif key not in target.private_link_keys_active:
-                        if not check_can_access(node=target, user=user, key=key):
-                            redirect_url = check_key_expired(key=key, node=target, url=request.url)
-                            if request.headers.get('Content-Type') == 'application/json':
-                                raise HTTPError(http.UNAUTHORIZED)
-                            else:
-                                response = redirect(cas.get_login_url(redirect_url))
+                        else:
+                            response = redirect(cas.get_login_url(redirect_url))
 
             return response or func(*args, **kwargs)
 
