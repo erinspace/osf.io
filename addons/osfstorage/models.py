@@ -366,7 +366,7 @@ class OsfStorageFile(OsfStorageFileNode, File):
         search.update_file(self, delete=True)
         return super(OsfStorageFile, self).delete(user, parent, **kwargs)
 
-    def save(self, skip_search=False, *args, **kwargs):
+    def save(self, skip_search=False):
         from website.search import search
 
         ret = super(OsfStorageFile, self).save()
