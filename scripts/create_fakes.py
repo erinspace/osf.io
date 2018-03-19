@@ -39,6 +39,7 @@ import sys
 import mock
 import argparse
 import logging
+import random
 
 import django
 import pytz
@@ -299,9 +300,16 @@ def evaluate_argument(string):
     return ast.literal_eval(string)
 
 
+def create_fake_filename():
+    return '{}.{}'.format(fake.science_word(), random.choice(['txt', 'png', 'jpg', 'pdf']))
+
+def create_fake_sentence():
+    return fake.science_sentence()
+
+
 def create_fake_project(creator, n_users, privacy, n_components, name, n_tags, presentation_name, is_registration, is_preprint, preprint_provider):
     auth = Auth(user=creator)
-    project_title = name if name else fake.science_sentence()
+    project_title = name if name else fake.science_sentence().replace('.', '').title()
     if is_preprint:
         provider = None
         if preprint_provider:
@@ -330,7 +338,7 @@ def create_fake_project(creator, n_users, privacy, n_components, name, n_tags, p
     if isinstance(n_components, int):
         for _ in range(n_components):
             NodeFactory(parent=node, title=fake.science_sentence(), description=fake.science_paragraph(),
-                        creator=creator)
+                        creator=creator, is_public=random.choice([True, False]))
     elif isinstance(n_components, list):
         render_generations_from_node_structure_list(node, creator, n_components)
     for _ in range(n_tags):
@@ -352,7 +360,8 @@ def render_generations_from_parent(parent, creator, num_generations):
             parent=current_gen,
             creator=creator,
             title=fake.science_sentence(),
-            description=fake.science_paragraph()
+            description=fake.science_paragraph(),
+            is_public=random.choice([True, False])
         )
         current_gen = next_gen
     return current_gen
