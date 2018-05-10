@@ -24,7 +24,7 @@ from framework.auth import signing
 from framework.auth import cas
 from website.util import rubeus
 
-from osf.models import Tag, QuickFilesNode
+from osf.models import Tag, QuickFilesNode, FileVersionUserMetadata
 from osf.models import files as models
 from addons.osfstorage.apps import osf_storage_root
 from addons.osfstorage import utils
@@ -32,7 +32,7 @@ from addons.base.views import make_auth
 from addons.osfstorage import settings as storage_settings
 from api_tests.utils import create_test_file
 
-from osf_tests.factories import ProjectFactory, ApiOAuth2PersonalTokenFactory
+from osf_tests.factories import ProjectFactory, ApiOAuth2PersonalTokenFactory, UserFactory
 
 def create_record_with_version(path, node_settings, **kwargs):
     version = factories.FileVersionFactory(**kwargs)
@@ -113,6 +113,36 @@ class TestGetMetadataHook(HookTestCase):
         assert_equal(res_date_modified, expected_date_modified)
         assert_equal(res_date_created, expected_date_created)
         assert_equal(res_data, expected_data)
+
+    def test_children_metadata_multiple_unseen_versions(self):
+        path = u'kind/of/magíc.mp3'
+        record = recursively_create_file(self.node_settings, path)
+        version = factories.FileVersionFactory()
+        record.versions.add(version)
+
+        version2 = factories.FileVersionFactory()
+        record.versions.add(version2)
+
+        version3 = factories.FileVersionFactory()
+        record.versions.add(version3)
+
+        record.save()
+
+        user2 = UserFactory()
+        FileVersionUserMetadata.objects.create(user=user2, file_version=version3)
+
+        res = self.send_hook(
+            'osfstorage_get_children',
+            {'fid': record.parent._id, 'user_id': user2._id},
+            {},
+        )
+        assert_equal(len(res.json), 1)
+        res_data = res.json[0]
+
+        assert res_data['latestVersionSeen'].get('seen') == True
+        assert res_data['latestVersionSeen'].get('user') == user2._id
+        assert not FileVersionUserMetadata.objects.filter(user=user2, file_version=version).count()
+        assert not FileVersionUserMetadata.objects.filter(user=user2, file_version=version2).count()
 
     def test_osf_storage_root(self):
         auth = Auth(self.project.creator)
