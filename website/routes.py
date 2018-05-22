@@ -30,6 +30,7 @@ from framework.auth import views as auth_views
 from framework.routing import render_mako_string
 from framework.auth.core import _get_current_user
 
+from addons.osfstorage.models import Region
 from osf.models import Institution
 from osf.utils import sanitize
 from website import util
@@ -92,6 +93,14 @@ def get_globals():
             request_login_url = request.url.replace(request.host_url, settings.DOMAIN)
     else:
         request_login_url = request.url
+
+    if user:
+        default_storage_region = user.get_addon('osfstorage').default_region.serialize()
+        region_list = [region.serialize() for region in Region.objects.all()]
+        region_list.insert(0, region_list.pop(region_list.index(default_storage_region)))  # default should be at top of list for UI.
+    else:
+        region_list = []
+
     return {
         'private_link_anonymous': is_private_link_anonymous_view(),
         'user_name': user.username if user else '',
@@ -158,6 +167,7 @@ def get_globals():
         'footer_links': settings.FOOTER_LINKS,
         'waffle': waffle,
         'csrf_cookie_name': api_settings.CSRF_COOKIE_NAME,
+        'storage_regions': region_list,
     }
 
 
@@ -932,6 +942,13 @@ def make_url_map(app):
         ),
 
         Rule(
+            '/profile/change_storage_location/',
+            'post',
+            profile_views.user_change_default_storage_location,
+            json_renderer,
+        ),
+
+        Rule(
             '/profile/region/',
             'put',
             osfstorage_views.update_region,
@@ -1518,6 +1535,12 @@ def make_url_map(app):
             ],
             'put',
             project_views.node.update_node,
+            json_renderer,
+        ),
+        Rule(
+            '/node/<nid>/change_storage_location/',
+            'post',
+            project_views.node.node_change_default_storage_location,
             json_renderer,
         ),
 
