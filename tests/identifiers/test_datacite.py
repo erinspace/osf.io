@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import mock
 import lxml
 import pytest
@@ -8,16 +9,12 @@ from nose.tools import *  # noqa
 from website import settings
 from website.app import init_addons
 from website.identifiers.clients import DataCiteClient
+from website.identifiers import metadata
 
 from tests.base import OsfTestCase
+from tests.identifiers.conftest import datacite_metadata_response
 from tests.test_addons import assert_urls_equal
 from osf_tests.factories import AuthUserFactory, RegistrationFactory
-
-
-@pytest.fixture()
-def registration():
-    return RegistrationFactory()
-
 
 class MockDataciteClient(object):
 
@@ -27,12 +24,19 @@ class MockDataciteClient(object):
     metadata_get = mock.Mock(return_value=datacite_metadata_response())
     metadata_post = mock.Mock(return_value='OK (10.5072/FK2osf.io/yvzp4)')
 
+@pytest.fixture()
+def datacite_client():
+    return DataCiteClient()
+
+@pytest.fixture()
+def registration():
+    return RegistrationFactory()
 
 @pytest.mark.django_db
 class TestDataCiteClient:
 
     @responses.activate
-    @mock.patch('website.identifiers.clients.datacite_client.DataCiteMDSClient', MockDataciteClient)
+    @mock.patch('website.identifiers.clients.datacite.DataCiteMDSClient', MockDataciteClient)
     @mock.patch('website.settings.DATACITE_URL', 'https://mds.fake.datacite.org')
     def test_datacite_create_identifiers(self, datacite_client, datacite_node_metadata):
         responses.add(
@@ -49,7 +53,7 @@ class TestDataCiteClient:
         MockDataciteClient.metadata_post.assert_called_with(datacite_node_metadata)
 
     @responses.activate
-    @mock.patch('website.identifiers.clients.datacite_client.DataCiteMDSClient', MockDataciteClient)
+    @mock.patch('website.identifiers.clients.datacite.DataCiteMDSClient', MockDataciteClient)
     @mock.patch('website.settings.DATACITE_URL', 'https://mds.fake.datacite.org')
     def test_datacite_change_status_identifier(self, datacite_client, datacite_node_metadata):
         responses.add(
