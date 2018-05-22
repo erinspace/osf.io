@@ -549,7 +549,7 @@ class PreprintProviderFactory(DjangoModelFactory):
 
 def sync_set_identifiers(preprint):
     from website.identifiers.utils import get_doi_client
-    from website.identifiers.clients.ezid_client import EzidClient
+    from website.identifiers.clients import EzidClient
     client = get_doi_client(preprint)
 
     if isinstance(client, EzidClient):
