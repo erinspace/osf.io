@@ -81,17 +81,17 @@ class TestDataCiteClient:
         expected_location = 'http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd'
         assert_equal(root.attrib[xsi_location], expected_location)
 
-        identifier = root.find('{%s}identifier' % settings.DATACITE_NAMESPACE)
+        identifier = root.find('{%s}identifier' % settings.DATACITE_PREFIX)
         assert_equal(identifier.attrib['identifierType'], 'DOI')
         assert_equal(identifier.text, '10.5072/FK2osf.io/{}'.format(registration._id))
 
-        creators = root.find('{%s}creators' % settings.DATACITE_NAMESPACE)
+        creators = root.find('{%s}creators' % settings.DATACITE_PREFIX)
         assert_equal(len(creators.getchildren()), len(registration.visible_contributors))
 
-        publisher = root.find('{%s}publisher' % settings.DATACITE_NAMESPACE)
+        publisher = root.find('{%s}publisher' % settings.DATACITE_PREFIX)
         assert_equal(publisher.text, 'Open Science Framework')
 
-        pub_year = root.find('{%s}publicationYear' % settings.DATACITE_NAMESPACE)
+        pub_year = root.find('{%s}publicationYear' % settings.DATACITE_PREFIX)
         assert_equal(pub_year.text, str(registration.registered_date.year))
 
     def test_metadata_for_node_only_includes_visible_contribs(self, datacite_client):
