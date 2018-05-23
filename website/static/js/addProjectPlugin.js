@@ -88,9 +88,9 @@ var AddProject = {
             var data;
             self.viewState('processing');
             if(self.options.parentID) {
-                url = $osf.apiV2Url('nodes/' + self.options.parentID + '/children/', { query : {'inherit_contributors' : self.newProjectInheritContribs(), 'version': '2.2'}});
+                url = $osf.apiV2Url('nodes/' + self.options.parentID + '/children/', { query : {'inherit_contributors' : self.newProjectInheritContribs(), 'version': '2.2', 'region': self.newProjectStorageLocation().id}});
             } else {
-                url = $osf.apiV2Url('nodes/', { query : {'version': '2.2'}});
+                url = $osf.apiV2Url('nodes/', { query : {'version': '2.2', 'region': self.newProjectStorageLocation().id}});
             }
             data = {
                     'data' : {
@@ -146,10 +146,6 @@ var AddProject = {
                     }
                 });
             }
-            request.then(function (result) {
-                var changestorageLocationNode = '/api/v1/node/' + result.data.id + '/change_storage_location/';
-                $osf.postJSON(changestorageLocationNode, {'region': self.newProjectStorageLocation()});
-            });
             request.then(success, error);
             self.newProjectName('');
             self.newProjectDesc('');
