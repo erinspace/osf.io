@@ -30,7 +30,6 @@ from framework.auth import views as auth_views
 from framework.routing import render_mako_string
 from framework.auth.core import _get_current_user
 
-from addons.osfstorage.models import Region
 from osf.models import Institution
 from osf.utils import sanitize
 from website import util
@@ -93,14 +92,6 @@ def get_globals():
             request_login_url = request.url.replace(request.host_url, settings.DOMAIN)
     else:
         request_login_url = request.url
-
-    if user:
-        default_storage_region = user.get_addon('osfstorage').default_region
-        default_storage_region = {'name': default_storage_region.name, '_id': default_storage_region._id}
-        region_list = list(Region.objects.all().values('_id', 'name'))
-        region_list.insert(0, region_list.pop(region_list.index(default_storage_region)))  # default should be at top of list for UI.
-    else:
-        region_list = []
 
     return {
         'private_link_anonymous': is_private_link_anonymous_view(),
