@@ -35,6 +35,7 @@ var AddProject = {
         self.newProjectName = m.prop('');
         self.newProjectDesc = m.prop('');
         self.newProjectStorageLocation = m.prop(window.contextVars.storageRegions[0]); // first storage region is default
+        self.storageRegions = m.prop(window.contextVars.storageRegions);
         self.newProjectCategory = m.prop(self.defaultCat);
         self.newProjectTemplate = m.prop('');
         self.newProjectInheritContribs = m.prop(false);
@@ -228,7 +229,10 @@ var AddProject = {
                         m('.form-group.m-v-sm', [
                             m('row',
                                 m('f-w-lg.text-bigger', 'Storage location'),
-                                m.component(SelectStorageLocation, {value: ctrl.newProjectStorageLocation})
+                                m.component(SelectStorageLocation, {
+                                    value: ctrl.newProjectStorageLocation,
+                                    locations: ctrl.storageRegions
+                                })
                             )
                             ]
                         ),
@@ -482,7 +486,7 @@ var SelectStorageLocation = {
     view: function(ctrl, options) {
         return m('select.p-t-sm', {config: SelectStorageLocation.config(options)},
             [
-            window.contextVars.storageRegions.map(function(region) {
+            options.locations().map(function(region) {
                 var args = {value: region._id};
                 return m('option', args, region.name);
             })
@@ -496,7 +500,7 @@ var SelectStorageLocation = {
                     var id = $el.select2('val');
                     m.startComputation();
                     //Set the value to the selected option
-                    window.contextVars.storageRegions.map(function (location) {
+                    ctrl.locations().map(function (location) {
                         if (location._id === id) {
                             ctrl.value(location);
                         }
