@@ -98,11 +98,11 @@ class UserSerializer(JSONAPISerializer):
         related_view_kwargs={'user_id': '<_id>'},
     ))
 
-    default_region = RelationshipField(
+    default_region = ShowIfCurrentUser(RelationshipField(
         related_view='regions:region-detail',
-        related_view_kwargs={'region_id': '<osfstorage_region._id>'},
+        related_view_kwargs={'region_id': 'get_default_region_id'},
         read_only=True
-    )
+    ))
 
     class Meta:
         type_ = 'users'
@@ -130,6 +130,16 @@ class UserSerializer(JSONAPISerializer):
 
     def get_accepted_terms_of_service(self, obj):
         return bool(obj.accepted_terms_of_service)
+
+    def get_default_region_id(self, obj):
+        try:
+            # use the annotated valud if possible
+            region = obj.default_region
+        except AttributeError:
+            # use computed property if region annotation does not exist
+            # i.e. after creating a node
+            region = obj.osfstorage_region
+        return region._id
 
     def profile_image_url(self, user):
         size = self.context['request'].query_params.get('profile_image_size')

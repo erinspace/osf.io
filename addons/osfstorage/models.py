@@ -517,6 +517,16 @@ class NodeSettings(BaseNodeSettings, BaseStorageAddon):
         self.root_node = root
         self.save(clean=False)
 
+    def set_region(self, region_id):
+        try:
+            region = Region.objects.get(_id=region_id)
+        except Region.DoesNotExist:
+            raise ValueError('Region cannot be found.')
+
+        self.region = region
+        self.save()
+        return
+
     def before_fork(self, node, user):
         pass
 
