@@ -399,7 +399,7 @@ def legacy_share_v1_search(**kwargs):
 
 
 def get_storage_region_list(user, node=False):
-    if not user: # Preserves legacy frontend test behavior
+    if not user:  # Preserves legacy frontend test behavior
         return []
 
     if node:
@@ -412,4 +412,3 @@ def get_storage_region_list(user, node=False):
     available_regions.insert(0, available_regions.pop(available_regions.index(default_region)))  # default should be at top of list for UI.
 
     return available_regions
-
