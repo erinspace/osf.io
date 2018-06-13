@@ -233,6 +233,15 @@ class AbstractNode(DirtyFieldsMixin, TypedModel, AddonModelMixin, IdentifierMixi
         'preprint_file',
     }
 
+    # Node fields that trigger an identifier update on save
+    IDENTIFIER_UPDATE_FIELDS = {
+        'title',
+        'description'
+        'contributors',
+        'is_public',
+        'node_license'
+    }
+
     # Node fields that trigger a check to the spam filter on save
     SPAM_CHECK_FIELDS = {
         'title',
