@@ -21,6 +21,9 @@ class RequestComesFromMailgun(permissions.BasePermission):
         data = request.data
         if not data:
             raise exceptions.ParseError('Request body is empty')
+        if not settings.MAILGUN_API_KEY:
+            return False
+            # raise Exception('Setting a Mailgun API key is required to parse the response.')
         signature = hmac.new(
             key=settings.MAILGUN_API_KEY,
             msg='{}{}'.format(
