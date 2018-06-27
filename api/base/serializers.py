@@ -480,7 +480,7 @@ class RelationshipField(ser.HyperlinkedIdentityField):
         )
 
         region = RegionRelationshipField(
-           related_view='regions:region-detail',
+            related_view='regions:region-detail',
             related_view_kwargs={'region_id': 'get_region_id'},
             read_only=False
         )
