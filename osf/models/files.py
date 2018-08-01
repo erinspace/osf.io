@@ -281,6 +281,7 @@ class BaseFileNode(TypedModel, CommentableMixin, OptionalGuidMixin, Taggable, Ob
 
     def generate_waterbutler_url(self, **kwargs):
         return waterbutler_api_url_for(
+            self.target.osfstorage_region.waterbutler_url,
             self.target._id,
             self.provider,
             self.path,
