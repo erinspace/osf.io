@@ -2,7 +2,7 @@ import pytest
 
 from framework.auth import Auth
 
-from osf.models import MetaSchema, Registration
+from osf.models import RegistrationSchema, Registration
 from osf_tests.factories import (
     AuthUserFactory,
     ProjectFactory,
@@ -52,7 +52,7 @@ class TestRegion:
         :param project_with_different_regions:
         :return:
         """
-        schema = MetaSchema.objects.first()
+        schema = RegistrationSchema.objects.first()
         project_with_different_regions.register_node(schema, Auth(user=user), '41-33')
 
         regs = Registration.objects.all()
