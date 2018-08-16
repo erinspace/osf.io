@@ -158,7 +158,6 @@ def get_globals():
         'footer_links': settings.FOOTER_LINKS,
         'waffle': waffle,
         'csrf_cookie_name': api_settings.CSRF_COOKIE_NAME,
-        'storage_regions': region_list,
     }
 
 
