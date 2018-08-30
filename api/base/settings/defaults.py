@@ -283,3 +283,5 @@ ANONYMOUS_USER_NAME = None
 
 # If set to True, automated tests with extra queries will fail.
 NPLUSONE_RAISE = False
+
+# trying  a hotfix
