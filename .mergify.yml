@@ -8,14 +8,14 @@ rules:
         strict: true
         contexts:
         - continuous-integration/travis-ci
-    enabling_label: null
-		disabling_label: no-mergify
-		disabling_files:
-		- .mergify.yml
-		- .travis.yml
-	branches:
-		protection:
-			feature/.*:
-				required_pull_request_reviews:
-					required_approving_review_count: 1
-		master: null
+    # enabling_label: null
+		# disabling_label: no-mergify
+		# disabling_files:
+		# - .mergify.yml
+		# - .travis.yml
+	# branches:
+	# 	protection:
+	# 		feature/.*:
+	# 			required_pull_request_reviews:
+	# 				required_approving_review_count: 1
+	# 	master: null
