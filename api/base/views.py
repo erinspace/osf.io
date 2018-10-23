@@ -38,6 +38,7 @@ from framework.auth.oauth_scopes import CoreScopes
 from osf.models import Contributor, MaintenanceState, BaseFileNode
 from waffle.models import Flag
 from waffle import flag_is_active
+from addons.googledrive.models import GoogleDriveFile
 
 class JSONAPIBaseView(generics.GenericAPIView):
 
@@ -580,6 +581,12 @@ class WaterButlerMixin(object):
                 # create method on BaseFileNode appends provider, bulk_create bypasses this step so it is added here
                 file_obj = base_class(target=node, _path='/' + attrs['path'].lstrip('/'), provider=base_class._provider)
                 objs_to_create[base_class].append(file_obj)
+            except base_class.MultipleObjectsReturned:
+                # GoogleDrive allows files to have the same name, use hash to distinguish
+                if base_class == GoogleDriveFile:
+                    multiple_files = base_class.objects.filter(target_object_id=node.id, target_content_type=content_type, _path='/' + attrs['path'].lstrip('/'))
+                    file_obj = [fil for fil in multiple_files if fil._hashes['md5'] == attrs['extra']['hashes']['md5']][0]
+                    file_objs.append(file_obj)
             else:
                 file_objs.append(file_obj)
 
