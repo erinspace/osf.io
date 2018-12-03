@@ -101,7 +101,7 @@ def generate_raw_csv():
                     'file_guid': osf_storage_file.guids.first()._id if osf_storage_file.guids.exists() else None,
                     'file_size': first_version_size,
                     'file_version_size_sum': osf_storage_file.total_file_size,
-                    'file_last_seen': osf_storage_file.last_touched.isoformat(),  # TODO - what property should this be?
+                    'file_last_seen': osf_storage_file.last_known_metadata['last_seen'].isoformat()
                     'node_guid': target._id,
                     'node_type': target.type,
                     'node_is_fork': getattr(target, 'is_fork', None),
